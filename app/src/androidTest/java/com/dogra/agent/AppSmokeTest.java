@@ -52,8 +52,22 @@ public class AppSmokeTest extends ActivityInstrumentationTestCase2<MainActivity>
         assertFalse(SessionState.listening);
     }
     public void testAccessibilityCanNumberAndScrollSettings() throws Exception {
+        // Instrumentation force-stops the target at startup; reconnect afterwards.
+        android.app.UiAutomation automation = getInstrumentation().getUiAutomation(
+            android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
         MainActivity activity=getActivity();
-        long end=System.currentTimeMillis()+5000;
+        String[] commands = {
+            "settings put secure enabled_accessibility_services com.dogra.agent/com.dogra.agent.AgentAccessibilityService",
+            "settings put secure accessibility_enabled 1"
+        };
+        for (String command : commands) {
+            try (android.os.ParcelFileDescriptor descriptor = automation.executeShellCommand(command);
+                 java.io.FileInputStream stream = new java.io.FileInputStream(descriptor.getFileDescriptor())) {
+                byte[] buffer = new byte[1024];
+                while (stream.read(buffer) != -1) { }
+            }
+        }
+        long end=System.currentTimeMillis()+15000;
         while(AgentAccessibilityService.instance==null && System.currentTimeMillis()<end)Thread.sleep(100);
         assertNotNull("Accessibility must connect",AgentAccessibilityService.instance);
         getInstrumentation().runOnMainSync(() -> activity.startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS)));
