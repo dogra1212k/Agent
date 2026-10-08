@@ -81,3 +81,22 @@ jobs:
         with:
           name: Device-checks
           path: device-checks/
+  release:
+    needs: [build, emulator]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Agent-Voice-APK
+          path: dist
+      - name: Publish tested APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: agent-build-${{ github.run_number }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          gh release create "$RELEASE_TAG" dist/Agent-Voice-1.0.0.apk --target "$RELEASE_COMMIT" --title 'Agent Voice 1.0.0' --notes 'Hindi/Hinglish Android voice commands, app launching, floating microphone and accessibility controls. Unit tests, lint and Android 15 emulator checks passed. Physical microphone and phone speech models still require device testing.' --latest
