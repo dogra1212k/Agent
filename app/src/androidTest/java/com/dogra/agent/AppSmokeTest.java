@@ -51,4 +51,22 @@ public class AppSmokeTest extends ActivityInstrumentationTestCase2<MainActivity>
         assertFalse("Stop must end the session",SessionState.active);
         assertFalse(SessionState.listening);
     }
+    public void testAccessibilityCanNumberAndScrollSettings() throws Exception {
+        MainActivity activity=getActivity();
+        long end=System.currentTimeMillis()+5000;
+        while(AgentAccessibilityService.instance==null && System.currentTimeMillis()<end)Thread.sleep(100);
+        assertNotNull("Accessibility must connect",AgentAccessibilityService.instance);
+        getInstrumentation().runOnMainSync(() -> activity.startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS)));
+        Thread.sleep(1500);
+        CountDownLatch numbered=new CountDownLatch(1);
+        boolean[] ok={false};
+        getInstrumentation().runOnMainSync(() -> AgentAccessibilityService.instance.showNumbers((success,message)->{ok[0]=success;numbered.countDown();}));
+        assertTrue(numbered.await(5,TimeUnit.SECONDS));
+        assertTrue("Settings should expose numbered controls",ok[0]);
+        CountDownLatch scrolled=new CountDownLatch(1);
+        getInstrumentation().runOnMainSync(() -> AgentAccessibilityService.instance.scroll("down",(success,message)->{ok[0]=success;scrolled.countDown();}));
+        assertTrue(scrolled.await(5,TimeUnit.SECONDS));
+        assertTrue("Settings should scroll",ok[0]);
+        getInstrumentation().runOnMainSync(() -> AgentAccessibilityService.instance.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK));
+    }
 }

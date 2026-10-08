@@ -37,7 +37,7 @@ public class MainActivity extends Activity {
         status=Ui.text(this,"",18,Ui.TEXT); heard=Ui.text(this,"",13,Ui.MUTED);
         Ui.add(card,status,0); Ui.add(card,heard,8); Ui.add(body,card,22);
         mic=Ui.button(this,"●  Tap & speak",true,v->startSession(true)); Ui.add(body,mic,16);
-        session=Ui.button(this,"Start floating control",false,v->{if(SessionState.active) stopSession(); else startSession(false);}); Ui.add(body,session,10);
+        session=Ui.button(this,"Start floating control",false,v->{if(SessionState.active) stopSession(); else if(AgentAccessibilityService.instance==null)explainAccessibility();else startSession(false);}); Ui.add(body,session,10);
         LinearLayout options=Ui.column(this);
         Switch handsFree=new Switch(this); handsFree.setText("Hands-free session (up to 5 min)"); handsFree.setTextColor(Ui.TEXT); handsFree.setTextSize(14); handsFree.setMinHeight(Ui.dp(this,48));
         handsFree.setChecked(prefs().getBoolean("hands_free",false));
@@ -50,6 +50,7 @@ public class MainActivity extends Activity {
         Ui.add(body,Ui.text(this,"ONE-TIME SETUP",12,Ui.MINT),24);
         permissions=Ui.text(this,"",13,Ui.MUTED); Ui.add(body,permissions,8);
         Ui.add(body,Ui.button(this,"Enable screen control",false,v->explainAccessibility()),10);
+        Ui.add(body,Ui.button(this,"App permissions / restricted settings",false,v->{try{startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,android.net.Uri.parse("package:"+getPackageName())));}catch(ActivityNotFoundException e){SessionState.update("Android Settings mein Agent Voice ki App info kholiye.");}}),10);
         Ui.add(body,Ui.text(this,"Screen control lets Agent tap buttons, type and scroll across apps. Turn it on in Android Accessibility, then return here and start a session.",13,Ui.MUTED),10);
         Ui.add(body,Ui.text(this,"OR TYPE A COMMAND",12,Ui.MINT),24);
         input=new EditText(this); input.setTextColor(Ui.TEXT); input.setHintTextColor(Ui.MUTED); input.setHint("Chrome kholo aur AI news search karo"); input.setTextSize(15); input.setMaxLines(4); input.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE); Ui.add(body,input,8);
@@ -74,7 +75,7 @@ public class MainActivity extends Activity {
     private void stopSession(){stopService(new Intent(this,VoiceSessionService.class));}
     @Override public void onRequestPermissionsResult(int r,String[] p,int[] g){super.onRequestPermissionsResult(r,p,g); if(r==20 && (g.length==0||g[0]!=PackageManager.PERMISSION_GRANTED)) SessionState.update("Mic permission nahi mili. Aap command type kar sakte hain."); else if(r==20||r==21) startSession(pendingListen); refresh();}
     private void explainAccessibility(){new AlertDialog.Builder(this).setTitle("Agent ko screen control dein?")
-        .setMessage("Is permission se Agent screen ke visible buttons/text padh sakta hai aur aapke commands par tap, type aur scroll kar sakta hai. Screen text phone se upload nahi hota. Password fields use nahi hote.\n\nAndroid Settings → Accessibility → Agent Voice → On.\n\nFloating × ya notification ke Stop se session band kar sakte hain.")
+        .setMessage("Is permission se Agent screen ke visible buttons/text padh sakta hai aur aapke commands par tap, type aur scroll kar sakta hai. Screen text phone se upload nahi hota. Password fields use nahi hote.\n\nAndroid Settings → Accessibility → Agent Voice → On.\n\nAgar Restricted setting dikhe: App info → top-right menu → Allow restricted settings. Phir Accessibility par wapas aayein.\n\nFloating × ya notification ke Stop se session band kar sakte hain.")
         .setNegativeButton("Abhi nahi",null).setPositiveButton("Open Accessibility",(d,w)->{try{startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));}catch(ActivityNotFoundException e){SessionState.update("Settings app mein Accessibility kholiye.");}}).show();}
     private void runTyped(){String text=input.getText().toString().trim(); if(text.isEmpty())return; if(VoiceSessionService.instance!=null)VoiceSessionService.instance.runCommand(text);else {SessionState.record(text); typedExecutor.execute(text,result->SessionState.update(result));}}
     private void refresh(){if(status==null)return;status.setText(SessionState.status);heard.setText(SessionState.heard.isEmpty()?"Say: Chrome kholo": "You: "+SessionState.heard);
