@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 mkdir -p device-checks
+trap 'adb logcat -d > device-checks/logcat.txt; adb shell dumpsys accessibility > device-checks/accessibility.txt' EXIT
 adb install -r dist/Agent-Voice-1.0.0.apk
 adb install -r dist/app-debug-androidTest.apk
 adb shell pm grant com.dogra.agent android.permission.RECORD_AUDIO
