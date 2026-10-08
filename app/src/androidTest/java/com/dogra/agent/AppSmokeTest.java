@@ -73,13 +73,28 @@ public class AppSmokeTest extends ActivityInstrumentationTestCase2<MainActivity>
         long end=System.currentTimeMillis()+15000;
         while(AgentAccessibilityService.instance==null && System.currentTimeMillis()<end)Thread.sleep(100);
         assertNotNull("Accessibility must connect",AgentAccessibilityService.instance);
-        getInstrumentation().runOnMainSync(() -> activity.startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS)));
-        Thread.sleep(1500);
+        try (android.os.ParcelFileDescriptor descriptor = automation.executeShellCommand("am start -W -a android.settings.SETTINGS");
+             java.io.FileInputStream stream = new java.io.FileInputStream(descriptor.getFileDescriptor())) {
+            byte[] buffer = new byte[1024];
+            while (stream.read(buffer) != -1) { }
+        }
+        end=System.currentTimeMillis()+15000;
+        boolean settingsReady=false;
+        while(!settingsReady && System.currentTimeMillis()<end) {
+            android.view.accessibility.AccessibilityNodeInfo root=AgentAccessibilityService.instance.getRootInActiveWindow();
+            if(root!=null) {
+                settingsReady="com.android.settings".contentEquals(root.getPackageName());
+                root.recycle();
+            }
+            if(!settingsReady) Thread.sleep(100);
+        }
+        assertTrue("Settings must become the active accessibility window",settingsReady);
         CountDownLatch numbered=new CountDownLatch(1);
         boolean[] ok={false};
-        getInstrumentation().runOnMainSync(() -> AgentAccessibilityService.instance.showNumbers((success,message)->{ok[0]=success;numbered.countDown();}));
+        String[] detail={"No callback"};
+        getInstrumentation().runOnMainSync(() -> AgentAccessibilityService.instance.showNumbers((success,message)->{ok[0]=success;detail[0]=message;numbered.countDown();}));
         assertTrue(numbered.await(5,TimeUnit.SECONDS));
-        assertTrue("Settings should expose numbered controls",ok[0]);
+        assertTrue("Settings should expose numbered controls: "+detail[0],ok[0]);
         CountDownLatch scrolled=new CountDownLatch(1);
         getInstrumentation().runOnMainSync(() -> AgentAccessibilityService.instance.scroll("down",(success,message)->{ok[0]=success;scrolled.countDown();}));
         assertTrue(scrolled.await(5,TimeUnit.SECONDS));
