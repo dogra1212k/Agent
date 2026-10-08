@@ -9,6 +9,8 @@ adb shell pm grant com.dogra.agent android.permission.POST_NOTIFICATIONS
 adb shell settings put secure enabled_accessibility_services com.dogra.agent/com.dogra.agent.AgentAccessibilityService
 adb shell settings put secure accessibility_enabled 1
 adb logcat -c
+adb shell input keyevent KEYCODE_WAKEUP
+adb shell wm dismiss-keyguard
 adb shell am instrument -w com.dogra.agent.test/android.test.InstrumentationTestRunner | tee device-checks/instrumentation.txt
 grep -Eq 'OK \([0-9]+ tests?\)' device-checks/instrumentation.txt
 adb shell am start -W -n com.dogra.agent/.MainActivity
