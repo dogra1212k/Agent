@@ -57,6 +57,9 @@ public class AppSmokeTest extends ActivityInstrumentationTestCase2<MainActivity>
             android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
         MainActivity activity=getActivity();
         String[] commands = {
+            "appops set com.dogra.agent ACCESS_RESTRICTED_SETTINGS allow",
+            "settings put secure enabled_accessibility_services null",
+            "settings put secure accessibility_enabled 0",
             "settings put secure enabled_accessibility_services com.dogra.agent/com.dogra.agent.AgentAccessibilityService",
             "settings put secure accessibility_enabled 1"
         };
