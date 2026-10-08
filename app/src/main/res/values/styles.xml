@@ -1,0 +1,12 @@
+<resources>
+    <style name="AppTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#66E3C4</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#0B121C</item>
+        <item name="android:navigationBarColor">#0B121C</item>
+        <item name="android:windowBackground">#0B121C</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+    <string name="accessibility_description">Agent can read visible buttons and perform taps, typing, scrolling and navigation only during a session you start. Screen text stays on your phone. Password fields are excluded. Stop the session from the floating × button or notification. Enable only if you want this control.</string>
+</resources>
